@@ -7,7 +7,7 @@ RUN mkdir -p /usr/src/classifier
 WORKDIR /usr/src/classifier
 
 COPY requirements.txt .
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r requirements.txt --trusted-host files.pythonhosted.org
 
 COPY . .
 
