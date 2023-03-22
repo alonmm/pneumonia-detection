@@ -1,3 +1,4 @@
+import json
 import requests
 
 headers = {
@@ -12,3 +13,7 @@ files = {
 
 response = requests.post('http://localhost:5000/pneumonia/predict', headers=headers, files=files)
 print(response.text)
+
+jRes = json.loads(response.text)
+print(jRes)
+print(jRes['pneumonia_probability'])
