@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 class Train:
     def __init__(self, force_download=False):
         self.force_download = force_download
-        self.data_path = os.path.join(os.getcwd(), 'classifier/data/')
-        self.model_path = os.path.join(os.getcwd(), 'classifier/models/')
+        self.data_path = os.path.join(os.getcwd(), 'classifier\\data\\')
+        self.model_path = os.path.join(os.getcwd(), 'classifier\\models/')
         self.dataset_name = 'paultimothymooney/chest-xray-pneumonia'
         self.model: Sequential
         self.val: ImageDataGenerator
@@ -24,22 +24,22 @@ class Train:
         self.epochs = 5
 
     def load_data(self):
-        self.download_data()
+        #self.download_data()
         train_generator = ImageDataGenerator(rescale=1/255.0)
         test_generator = ImageDataGenerator(rescale=1/255.0)
         val_generator = ImageDataGenerator(rescale=1/255.0)
-        self.train = train_generator.flow_from_directory(os.path.join(self.data_path, 'chest_xray/chest_xray/train'),
+        self.train = train_generator.flow_from_directory(os.path.join(self.data_path, 'chest_xray\\chest_xray\\train'),
                                                          target_size=(64, 64),
                                                          batch_size=32,
                                                          color_mode='grayscale',
                                                          class_mode='binary')
-        self.test = test_generator.flow_from_directory(os.path.join(self.data_path, 'chest_xray/chest_xray/test'),
+        self.test = test_generator.flow_from_directory(os.path.join(self.data_path, 'chest_xray\\chest_xray\\test'),
                                                          target_size=(64, 64),
                                                          batch_size=32,
                                                          color_mode='grayscale',
                                                          class_mode='binary')
 
-        self.val = val_generator.flow_from_directory(os.path.join(self.data_path, 'chest_xray/chest_xray/test'),
+        self.val = val_generator.flow_from_directory(os.path.join(self.data_path, 'chest_xray\\chest_xray\\test'),
                                                      target_size=(64, 64),
                                                      batch_size=32,
                                                      color_mode='grayscale',
@@ -87,5 +87,6 @@ class Train:
 
 
 if __name__ == '__main__':
-    train_model = Train(force_download=True)
+    #train_model = Train(force_download=True)
+    train_model = Train()
     train_model.deploy_model()
