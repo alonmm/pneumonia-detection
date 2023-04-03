@@ -19,3 +19,9 @@ http://localhost:5000/docs
 
 Run request from command line
 > curl -X POST "http://localhost:5000/pneumonia/predict" -H "accept: application/json" -H "Content-Type: multipart/form-data" -F "image_file=@D:\Projects\pneumonia-detection\fixtures\test_normal_1.jpeg;type=image/jpeg"
+
+Freeze the env and save requirements
+> pip freeze > requirements_venv.txt
+
+Run Qt Designer
+> (env) D:\Projects\pneumonia-detection\env>Lib\site-packages\qt5_applications\Qt\bin\designer.exe
