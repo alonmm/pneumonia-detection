@@ -12,16 +12,42 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QTableWidgetItem, QHeaderView
 
 import login1
-import report_case1
+import report_case
 import results_win
 import sendCurl
 import sign_up1
+import configparser
+class AppConfig(object):
+    user_name = None
+    xray_path = None
+    user_password = None
+    use_debug_values = False
+    def __init__(self):
+        self.readCfg()
 
+    def readCfg(self):
+        from configparser import ConfigParser
+
+        configur = ConfigParser()
+        print(configur.read('app_config.ini'))
+
+        print("Sections : ", configur.sections())
+        print("Installation Library : ", configur.get('installation', 'library'))
+        print("Log Errors debugged ? : ", configur.get('debug', 'user_name'))
+        print("Port Server : ", configur.getint('server', 'port'))
+        print("Worker Server : ", configur.getint('server', 'nworkers'))
+        self.user_name = configur.get('debug', 'user_name')
+        self.xray_path = configur.get('debug', 'xray_path')
+        self.user_password = configur.get('debug', 'user_password')
+        self.use_debug_values = configur.getboolean('debug', 'use_debug_values')
 
 class Ui_MainWindow(object):
     unique_id = None
     selected_row = None
+    theAppConfig = AppConfig()
+
     def setupUi(self, MainWindow, client):
+        print(self.theAppConfig.user_name)
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(832, 624)
         MainWindow.setStyleSheet("background-color: rgb(54, 54, 54);")
@@ -203,7 +229,6 @@ class Ui_MainWindow(object):
         self.pushButton_2.clicked.connect(lambda: self.back_to_home_page())
 
 
-
     def selected_row(self, selected):
         for ix in selected.indexes():
             self.selected_row = ix.row()
@@ -211,7 +236,7 @@ class Ui_MainWindow(object):
     def double_click_item(self, client):
         patient_id = self.tableWidget.item(self.selected_row, 1).text()
         self.dialog = QtWidgets.QDialog()
-        self.ui = report_case1.Ui_Report_case()
+        self.ui = report_case.Ui_Report_case()
         self.ui.setupUi(self.dialog, client, self, self.unique_id)
         self.ui.turn_into_show_patient_mode(client, patient_id)
         self.dialog.show()
@@ -290,8 +315,9 @@ class Ui_MainWindow(object):
         return response[0]
 
     def open_report_case_win(self, client):
-        self.dialog = QtWidgets.QDialog()
-        self.ui = report_case1.Ui_Report_case()
+        # self.dialog = QtWidgets.QDialog()
+        self.dialog = QtWidgets.QMainWindow()
+        self.ui = report_case.Ui_Report_case()
         self.ui.setupUi(self.dialog, client, self, self.unique_id)
         self.dialog.show()
 

@@ -91,8 +91,15 @@ class Ui_Login(object):
         self.label_11.hide()
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
-        self.pushButton_3.clicked.connect(lambda: self.try_login(Dialog, client, main_win))
-
+        if main_win.theAppConfig.use_debug_values:
+            self.pushButton_3.clicked.connect(lambda: self.forceLogin(Dialog, client, main_win))
+        else:
+            self.pushButton_3.clicked.connect(lambda: self.try_login(Dialog, client, main_win))
+    def forceLogin(self, Dialog, client, main_win):
+        # main_win.turn_into_logged_in_mode('alonm', '6daf8ddc-d60f-44e3-91d3-d8198fd89a33')
+        main_win.turn_into_logged_in_mode(main_win.theAppConfig.user_name, main_win.theAppConfig.user_password)
+        main_win.fill_table(client)
+        Dialog.close()
     def try_login(self, Dialog, client, main_win):
         username = self.lineEdit_5.text()
         password = self.lineEdit_6.text()

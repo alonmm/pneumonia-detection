@@ -1,12 +1,14 @@
-import os.path
+
+import ssl
 import threading as th
 import socket
-
-from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from queue import Queue
 import db
-import hashlib
+certfile=r"localhost.pem"
+cafile = r"cacert.pem"
+purpose = ssl.Purpose.CLIENT_AUTH
+context = ssl.create_default_context(purpose, cafile=cafile)
+context.load_cert_chain(certfile)
 def insert_db(conn_q):
     db.build_DB()
     if conn_q.empty() is False:
@@ -16,18 +18,32 @@ def insert_db(conn_q):
         return bret
     #time.sleep(0.05)
 
-def handle_pic(data, client_socket):
-    photo_name =  data[0]
-    f = open(photo_name, 'wb')
+def handle_pic(spllited_data, client_socket):
+    photo_name = spllited_data[0]
+    # while True:
+    #     data = client_socket.recv(1024)
+    #     f.write(data)
+    #     if len(data) < 1024:
+    #         f.write(data)
+    #         break
+    # photo_path = os.path.join(r"D:\Projects\finale", "pneumonia_3.jpeg")
+    img_bytes = b''
     while True:
         data = client_socket.recv(1024)
-        f.write(data)
+        img_bytes += data
         if len(data) < 1024:
-            f.write(data)
+            img_bytes += data
             break
-    photo_path = os.path.join(r"D:\Projects\finale", "pneumonia_3.jpeg")
-    # chance = sendCurl.send_curl(photo_path)
-    # print(chance)
+
+    # with client_socket:
+    #     img_bytes = b''
+    #     while True:
+    #         data = client_socket.recv(4096)
+    #         if not data:
+    #             break
+    #         img_bytes += data
+    doctor_id = spllited_data[1]
+    return photo_name, doctor_id, img_bytes
 
 
 def handle_login_msg(msg):
@@ -46,52 +62,28 @@ def handle_add_patient_msg(msg):
     full_name = msg[0]
     ID = msg[1]
     email = msg[2]
-    date = msg[3]
-    case_description = msg[4]
-    doctor_id = msg[5]
-    if len(msg) < 7:
-        return full_name, ID, email, date, case_description, doctor_id, None
+    gender = msg[3]
+    birth_date = msg[4]
+    case_description = msg[5]
+    visit_date = msg[6]
+    doctor_id = msg[7]
+    if len(msg) < 9:
+        return full_name, ID, email, gender, birth_date, case_description, visit_date, doctor_id, None
     else:
-        pneu_chance = msg[6]
-        return full_name, ID, email, date, case_description, doctor_id, pneu_chance
+        pneu_chance = msg[8]
+        return full_name, ID, email, gender, birth_date, case_description, visit_date, doctor_id, pneu_chance
 
 def handle_client(client_socket, client_address, conn_q):
-    # Generate RSA key pair
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048
-    )
-    public_key = private_key.public_key()
-
-    # Serialize public key
-    public_pem = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    )
-
-    # Send public key to client
-    client_socket.send(public_pem)
     while True:
         try:
-            encrypted_message = client_socket.recv(1024)
-            # Decrypt message using private key
-            plaintext = private_key.decrypt(
-                encrypted_message,
-                padding.OAEP(
-                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                    algorithm=hashes.SHA256(),
-                    label=None
-                )
-            )
-            data = plaintext.decode()
+            data = client_socket.recv(1024)
+            data = data.decode()
             print(f'[*] Received message from {client_address}: {data}')
             split_data = data.splitlines()
             bret = 0
             #handle with login requests
             if split_data[0] == 'login':
                 username, password = handle_login_msg(split_data[1:])
-                password = hashlib.md5(password.encode()).hexdigest()
-                #conn_q.put((username, password))
                 bret, unique_id = db.find_username_and_password(username, password)
                 if bret:
                     res = str(bret) + "\r\n" + unique_id
@@ -101,8 +93,6 @@ def handle_client(client_socket, client_address, conn_q):
             #handle with sign up requests
             if split_data[0] == 'sign_up':
                 name, email, username, password = handle_sign_up_msg(split_data[1:])
-                password = hashlib.md5(password.encode()).hexdigest()
-                #conn_q.put((name, email, username, password))
                 bret, unique_id = db.add_user(name, email, username, password)
                 if bret:
                     res = str(bret) + "\r\n" + unique_id
@@ -110,14 +100,15 @@ def handle_client(client_socket, client_address, conn_q):
                     res = str(bret)
 
             if split_data[0] == 'pic':
-                handle_pic(split_data[1:], client_socket)
+                photo_name, doctor_id, img_bytes =handle_pic(split_data[1:], client_socket)
+                db.add_image(doctor_id, img_bytes)
 
             if split_data[0] == 'add_patient':
-                full_name, ID, email, date, case_description, doctor_id, pneu_chance = handle_add_patient_msg(split_data[1:])
+                full_name, ID, email, gender, birth_date, case_description, visit_date, doctor_id, pneu_chance = handle_add_patient_msg(split_data[1:])
                 if pneu_chance is None:
-                    bret = db.add_patient(full_name, ID, email, date, case_description, doctor_id)
+                    bret = db.add_patient(full_name, ID, email, gender, birth_date, case_description, visit_date, doctor_id)
                 else:
-                    bret = db.add_patient_with_photo(full_name, ID, email, date, case_description, doctor_id, pneu_chance)
+                    bret = db.add_patient_with_photo(full_name, ID, email, gender, birth_date, case_description, visit_date, doctor_id, pneu_chance)
                 if bret:
                     res = str(bret) + "\r\n" + username
                 else:
@@ -134,12 +125,19 @@ def handle_client(client_socket, client_address, conn_q):
             print(bret)
             # Send encrypted message to client
             response = split_data[0] +"_ans\r\n" + res
-            if not encrypted_message:
-                break
-            client_socket.sendall(str.encode(response))
+            response = response.encode()
+            total_sent = 0
+            # while total_sent < len(response):
+            #     sent = client_socket.send(response)
+            #     response = response[1024:]
+            #     if sent == 0:
+            #         raise RuntimeError("socket connection broken")
+            #     total_sent += sent
+            client_socket.sendall(response)
+            # client_socket.close()
         except Exception as e:
             None
-    client_socket.close()
+            client_socket.close()
 
 def run():
     host = '127.0.0.1'
@@ -153,6 +151,7 @@ def run():
         ServerSideSocket.bind((host, port))
     except socket.error as e:
         print(str(e))
+    ServerSideSocket = context.wrap_socket(ServerSideSocket, server_side=True)
     print('Socket is listening..')
     ServerSideSocket.listen(1)
     b = th.Thread(target=db.build_DB())
