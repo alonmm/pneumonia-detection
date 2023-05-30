@@ -57,3 +57,11 @@ GitHub that uses FastAPI and router lets access the module (the one we cloned)
 
 FastAPI Guide
 > https://reshetech.co.il/python-tutorials/fastapi-probably-the-best-python-web-framework
+
+FastAPI: The simplest FastAPI file could look like this
+> https://fastapi.tiangolo.com/tutorial/first-steps/
+
+TensorFlow
+> https://www.tensorflow.org/api_docs/python/tf/Graph
+> https://www.tensorflow.org/guide/intro_to_graphs?hl=he
+> https://analyticsindiamag.com/a-complete-understanding-of-dense-layers-in-neural-networks/
