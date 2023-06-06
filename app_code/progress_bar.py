@@ -12,149 +12,64 @@
 
 # -- sample for signal & slots
 # https://stackoverflow.com/questions/64343633/how-to-return-a-variable-from-another-window-in-pyqt
-
-
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWidgets import (QApplication, QDialog,
-                             QProgressBar, QPushButton)
-# from PyQt5 import QtCore, QtGui, QtWidgets
-
+from PyQt5.QtWidgets import (QProgressBar, QLabel)
 import sys
-from time import sleep
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QApplication,
-    QLabel,
-    QMainWindow,
     QPushButton,
     QVBoxLayout,
-    QWidget,
 )
-
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
-# from PyQt5 import QtGui, QtCore
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-# class Window(QMainWindow):
-#     def __init__(self, parent=None):
-#         super().__init__(parent)
-#         self.clicksCount = 0
-#         self.setupUi()
-#
-#     def setupUi(self):
-#         self.setWindowTitle("Freezing GUI")
-#         self.resize(300, 150)
-#         self.centralWidget = QWidget()
-#         self.setCentralWidget(self.centralWidget)
-#         # Create and connect widgets
-#         self.clicksLabel = QLabel("Counting: 0 clicks", self)
-#         self.clicksLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-#         self.stepLabel = QLabel("Long-Running Step: 0")
-#         self.stepLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-#         self.countBtn = QPushButton("Click me!", self)
-#         self.countBtn.clicked.connect(self.countClicks)
-#         self.longRunningBtn = QPushButton("Long-Running Task!", self)
-#         self.longRunningBtn.clicked.connect(self.runLongTask)
-#
-#         self.progress = QProgressBar(self)
-#         self.progress.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-#         self.progress.setMaximum(0)
-#         self.progress.hide()
-#
-#         # Set the layout
-#         layout = QVBoxLayout()
-#         layout.addWidget(self.clicksLabel)
-#         layout.addWidget(self.countBtn)
-#         layout.addWidget(self.progress)
-#         layout.addStretch()
-#         layout.addWidget(self.stepLabel)
-#         layout.addWidget(self.longRunningBtn)
-#         self.centralWidget.setLayout(layout)
-#
-#     def countClicks(self):
-#         self.clicksCount += 1
-#         self.clicksLabel.setText(f"Counting: {self.clicksCount} clicks")
-#
-#     def reportProgress(self, n):
-#         self.stepLabel.setText(f"Long-Running Step: {n}")
-#
-#     def runLongTask(self):
-#         self.progress.show()
-#         # Step 2: Create a QThread object
-#         self.thread = QThread()
-#         # Step 3: Create a worker object
-#         self.worker = Worker()
-#         # Step 4: Move worker to the thread
-#         self.worker.moveToThread(self.thread)
-#         # Step 5: Connect signals and slots
-#         self.thread.started.connect(self.worker.run)
-#         self.worker.finished.connect(self.thread.quit)
-#         self.worker.finished.connect(self.worker.deleteLater)
-#         self.thread.finished.connect(self.thread.deleteLater)
-#         self.worker.progress.connect(self.reportProgress)
-#         # Step 6: Start the thread
-#         self.thread.start()
-#
-#         # Final resets
-#         self.longRunningBtn.setEnabled(False)
-#         self.thread.finished.connect(
-#             lambda: self.longRunningBtn.setEnabled(True)
-#         )
-#         self.thread.finished.connect(
-#             lambda: self.stepLabel.setText("Long-Running Step: 0")
-#         )
-#         self.thread.finished.connect(
-#             lambda: self.progress.hide()
-#         )
-
-# ---- trying to define dialog
 class Worker(QObject):
 
     def __init__(self, caller):
         super().__init__()
-        self._theCaller = caller
+        self.the_caller = caller
 
     finished = pyqtSignal()
     progress = pyqtSignal(int)
-    res_tuple = None
+    response_tuple = None
 
+    #A fucntion that runs the caller function. It informs when the function is finished.
     def run(self):
         """Long-running task."""
-        self.res_tuple = self._theCaller.funcForBackgroundWorker(self._theCaller.inParams[0])
+        self.response_tuple = self.the_caller.funcForBackgroundWorker(self.the_caller.inParams[0])
         # for i in range(5):
         #     sleep(1)
         #     self.progress.emit(i + 1)
 
         self.finished.emit()
 
-class WorkerDlg(object):
+class Worker_Dialog(object):
 
-    def __init__(self, Dialog,parent=None):
-        #super().__init__(parent)
+    def __init__(self, Dialog, parent=None):
         self.clicksCount = 0
-        # self.setupUi(Dialog)
-        self._theDlg = Dialog
+        self.dialog = Dialog
 
-    def setupUi(self, Dialog, client,funcForBackgroundWorker,inParamsTuple, funcForCallback):
-        self.funcForBackgroundWorker = funcForBackgroundWorker
-        self.funcForCallback = funcForCallback
-        self.inParams = inParamsTuple
+    # A function that receives Dialog, client, func_for_background_worker, parameters_tuple, func_for_callback. The function builds the dialog with its details
+    def setupUi(self, Dialog, client, func_for_background_worker, parameters_tuple, func_for_callback):
+        self.funcForBackgroundWorker = func_for_background_worker
+        self.funcForCallback = func_for_callback
+        self.inParams = parameters_tuple
         self.theClient = client
         Dialog.setWindowTitle("Diagnose pneumonia")
-        Dialog.resize(300, 150)
+        Dialog.resize(300, 100)
         Dialog.setModal(True)
         # Create and connect widgets
-        self.clicksLabel = QLabel("Counting: 0 clicks", Dialog)
+        self.diagnose_x_ray_btn = QPushButton("Detect", Dialog)
+        self.diagnose_x_ray_btn.setStyleSheet("background-color: rgb(14, 154, 175);\n"
+                                    "color: rgb(255,255,255);\n"
+                                    "font-size: 12pt\n"
+                                    "")
+        self.diagnose_x_ray_btn.setMaximumWidth(90)
+        self.diagnose_x_ray_btn.clicked.connect(self.run_long_task)
+        self.clicksLabel = QLabel("An X-ray file found, click the Detect button to predict pneumonia", Dialog)
         self.clicksLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.clicksLabel.setGeometry(QtCore.QRect(10, 10, 10, 10))
-        self.stepLabel = QLabel("Long-Running Step: 0")
-        self.stepLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.countBtn = QPushButton("Click me!", Dialog)
-        self.countBtn.clicked.connect(self.countClicks)
-        self.longRunningBtn = QPushButton("Long-Running Task!", Dialog)
-        self.longRunningBtn.clicked.connect(self.runLongTask)
-
+        self.clicksLabel.setStyleSheet("font-size: 12pt\n")
         self.progress = QProgressBar(Dialog)
         self.progress.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.progress.setMaximum(0)
@@ -163,28 +78,13 @@ class WorkerDlg(object):
         # Set the layout
         layout = QVBoxLayout()
         layout.addWidget(self.clicksLabel)
-        layout.addWidget(self.countBtn)
+        layout.addWidget(self.diagnose_x_ray_btn)
         layout.addWidget(self.progress)
         layout.addStretch()
-        layout.addWidget(self.stepLabel)
-        layout.addWidget(self.longRunningBtn)
         Dialog.setLayout(layout)
 
-    def countClicks(self):
-        self.clicksCount += 1
-        self.clicksLabel.setText(f"Counting: {self.clicksCount} clicks")
-
-    def reportProgress(self, n):
-        self.stepLabel.setText(f"Long-Running Step: {n}")
-
-    def onWorkerFinished(self):
-        self.funcForCallback(self.worker.res_tuple, self.theClient)
-        self.longRunningBtn.setEnabled(True)
-        self.stepLabel.setText("Long-Running Step: 0")
-        self.progress.hide()
-        self._theDlg.close()
-
-    def runLongTask(self):
+    #A function that starts a new thread, runs the worker, shows the progress and the calls after_worker_finished when the finction is finished
+    def run_long_task(self):
         self.progress.show()
         # Step 2: Create a QThread object
         self.thread = QThread()
@@ -197,85 +97,26 @@ class WorkerDlg(object):
         self.worker.finished.connect(self.thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
-        self.worker.progress.connect(self.reportProgress)
         # Step 6: Start the thread
         self.thread.start()
 
         # Final resets
-        self.longRunningBtn.setEnabled(False)
+        self.diagnose_x_ray_btn.setEnabled(False)
 
-        # self.thread.finished.connect(
-        #     lambda: self.longRunningBtn.setEnabled(True)
-        # )
-        # self.thread.finished.connect(
-        #     lambda: self.stepLabel.setText("Long-Running Step: 0")
-        # )
-        # self.thread.finished.connect(
-        #     lambda: self.progress.hide()
-        # )
         self.thread.finished.connect(
-            lambda: self.onWorkerFinished()
+            lambda: self.after_worker_finished()
         )
-# class Ui_Dialog(object):
-#     def setupUi(self, Dialog):
-#         Dialog.setObjectName("Dialog")
-#         Dialog.resize(400, 300)
-#         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
-#         self.buttonBox.setGeometry(QtCore.QRect(30, 240, 341, 32))
-#         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-#         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
-#         self.buttonBox.setObjectName("buttonBox")
-#         self.progressBar = QtWidgets.QProgressBar(Dialog)
-#         self.progressBar.setGeometry(QtCore.QRect(120, 30, 190, 23))
-#         self.progressBar.setStatusTip("")
-#         self.progressBar.setWhatsThis("")
-#         self.progressBar.setAccessibleName("")
-#         self.progressBar.setAccessibleDescription("")
-#         self.progressBar.setMaximum(100)
-#         self.progressBar.setProperty("value", -1)
-#         self.progressBar.setTextVisible(True)
-#         self.progressBar.setInvertedAppearance(False)
-#         self.progressBar.setObjectName("progressBar")
-#
-#         self.retranslateUi(Dialog)
-#         self.buttonBox.accepted.connect(Dialog.accept) # type: ignore
-#         self.buttonBox.rejected.connect(Dialog.reject) # type: ignore
-#
-#         QtCore.QMetaObject.connectSlotsByName(Dialog)
-#
-#     def retranslateUi(self, Dialog):
-#         _translate = QtCore.QCoreApplication.translate
-#         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-#         self.progressBar.setFormat(_translate("Dialog", "%p"))
-#
-#
-#     def onStart(self):
-#         self.progressBar.setRange(0,0)
-#         self.myLongTask.start()
-#
-#     #added this function to close the progress bar
-#     def onFinished(self):
-#         self.progressBar.setRange(0,1)
-#         self.prog_win.close()
+
+    #A function that is called after the run_long_task is finished. The function is calling to the callback function.
+    def after_worker_finished(self):
+        self.funcForCallback(self.worker.response_tuple, self.theClient)
+        self.diagnose_x_ray_btn.setEnabled(True)
+        self.progress.hide()
+        self.dialog.close()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     workDlg = QtWidgets.QDialog()
-    ui = WorkerDlg(workDlg)
+    ui = Worker_Dialog(workDlg)
     workDlg.show()
     sys.exit(app.exec())
-
-    #app = QApplication(sys.argv)
-    # dialog = QtWidgets.QDialog()
-    # dialog.setObjectName("Dialog")
-    # dialog.resize(601, 321)
-    # dialog.setStyleSheet("background-color: rgb(54, 54, 54);")
-    # dialog.setModal(True)
-    # ui = Window()
-    # dialog.show()
-
-    # win = Window()
-    # win.show()
-    # sys.exit(app.exec())
-
-

@@ -9,7 +9,8 @@
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-class Ui_statistical_analysis(object):
+class Ui_Statistical_analysis_Dialog(object):
+    # A function that receives a Dialog. The function builds the dialog with its details
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(640, 705)
@@ -60,7 +61,7 @@ class Ui_statistical_analysis(object):
         self.textEdit.raise_()
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
-    #A function that receives directory_path, client, dialog, doctor_id. The fuction fill a table with x-ray images and it's results.
+    # A function that receives directory_path, client, dialog, doctor_id. The function fills a table with x-ray images and it's results.
     def fill_stats_table(self, directory_path, client, dialog, doctor_id):
         count = 0
         patient_list = client.get_patients_list(doctor_id)
@@ -95,7 +96,7 @@ class Ui_statistical_analysis(object):
         _translate = QtCore.QCoreApplication.translate
         self.textEdit.setText(_translate("Dialog", "Below are presented some statistical data regarding the x-rays you uploaded to the system.\r\nX-rays uploaded: " + str(self.tableWidget.rowCount()) + "\r\nX-rays that were detected ad pneumonia: " + self.count_pneu_among_table()+ "\r\nOverall accuracy: " +self.check_accuracy()))
 
-    #A function that count the number of x-rays that was detected as pneumonuia
+    # A function that counts the number of x-rays that were detected as pneumonia
     def count_pneu_among_table(self):
         count = 0
         for row in range(self.tableWidget.rowCount()):
@@ -103,7 +104,7 @@ class Ui_statistical_analysis(object):
                 count += 1
         return str(count)
 
-    # A function that calculate the average accuracy of detection.
+    # A function that calculates the average accuracy of detection.
     def check_accuracy(self):
         sum = 0
         for row in range(self.tableWidget.rowCount()):

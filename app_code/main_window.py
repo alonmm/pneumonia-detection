@@ -11,47 +11,21 @@ import webbrowser
 from datetime import date
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QTableWidgetItem, QHeaderView
-import detection_stats
-import login1
-import report_case
-import results_win
-import sendCurl
-import sign_up1
-import configparser
-import config
-
-# class AppConfig(object):
-#     user_name = None
-#     xray_path = None
-#     user_password = None
-#     use_debug_values = False
-#     def __init__(self):
-#         self.readCfg()
-#
-#     def readCfg(self):
-#         from configparser import ConfigParser
-#
-#         configur = ConfigParser()
-#         print(configur.read('app_config.ini'))
-#
-#         print("Sections : ", configur.sections())
-#         print("Installation Library : ", configur.get('installation', 'library'))
-#         print("Log Errors debugged ? : ", configur.get('debug', 'user_name'))
-#         print("Port Server : ", configur.getint('server', 'port'))
-#         print("Worker Server : ", configur.getint('server', 'nworkers'))
-#         self.user_name = configur.get('debug', 'user_name')
-#         self.xray_path = configur.get('debug', 'xray_path')
-#         self.user_password = configur.get('debug', 'user_password')
-#         self.use_debug_values = configur.getboolean('debug', 'use_debug_values')
+import statistical_analysis_Dialog
+import login_Dialog
+import report_a_visit_Dialog
+import results_Dialog
+import send_curl
+import sign_up_Dialog
+import progress_bar
 
 class Ui_MainWindow(object):
     doctor_id = None
     selected_row = None
-    theAppConfig = None
-    # theAppConfig = config.AppConfig('app_config.ini')
-
-    def setupUi(self, MainWindow, client, configParser):
-        self.theAppConfig = configParser
+    the_app_config = None
+    #A function that receives  MainWindow, client, config_parser. The function builds the dialog with its details
+    def setupUi(self, MainWindow, client, config_parser):
+        self.the_app_config = config_parser
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(880, 690)
         MainWindow.setStyleSheet("background-color: rgb(54, 54, 54);")
@@ -226,7 +200,7 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         self.login_btn.clicked.connect(lambda: self.open_login_Dialog(client))
         self.sign_up_btn.clicked.connect(lambda: self.open_sign_up_Dialog(client))
-        self.x_ray_detection_btn.clicked.connect(lambda: self.select_photo_and_send_curl())
+        self.x_ray_detection_btn.clicked.connect(lambda: self.select_photo_and_send_curl(client))
         self.report_a_visit_btn.clicked.connect(lambda: self.open_report_a_visit_Dialog(client))
         self.tableWidget.selectionModel().selectionChanged.connect(self.selected_row)
         self.tableWidget.doubleClicked.connect(lambda: self.watch_patient_datails(client))
@@ -234,46 +208,39 @@ class Ui_MainWindow(object):
         self.about_btn.clicked.connect(lambda: self.open_project_book())
         self.detection_stats_btn.clicked.connect(lambda: self.open_statistical_analysis_Dialog(client))
 
-    # The function opens the project book from a url.
+    #The function opens the project book from a URL.
     def open_project_book(self):
         webbrowser.open("https://docs.google.com/document/d/1xoxYSfxPT1LbkVRRw4hjJANpfWASCB1bWV0eGYCthco/edit?usp=sharing")
 
-    # A function that always updates the row in the table that is selected
+    #A function that always updates the row in the table that is selected
     def selected_row(self, selected):
         for ix in selected.indexes():
             self.selected_row = ix.row()
 
+    # A function that receives a client. The function opens the report_a_visit_Dialog and changes the disply into view mode.
     def watch_patient_datails(self, client):
         patient_id = self.tableWidget.item(self.selected_row, 1).text()
         self.dialog = QtWidgets.QDialog()
-        self.ui = report_case.Ui_Report_a_visit()
+        self.ui = report_a_visit_Dialog.Ui_Report_a_visit_Dialog()
         self.ui.setupUi(self.dialog, client, self, self.doctor_id)
         self.ui.turn_into_show_patient_mode(client, patient_id)
         self.dialog.show()
 
-    def double_click_item(self, client):
-        patient_id = self.tableWidget.item(self.selected_row, 1).text()
-        self.dialog = QtWidgets.QDialog()
-        self.ui = report_case.Ui_Report_case()
-        self.ui.setupUi(self.dialog, client, self, self.unique_id)
-        self.ui.turn_into_show_patient_mode(client, patient_id)
-        self.dialog.show()
-
-    # A function that receives a client. The function opens the login dialog
+    #A function that receives a client. The function opens the login dialog
     def open_login_Dialog(self, client):
         self.dialog = QtWidgets.QDialog()
-        self.ui = login1.Ui_Login()
+        self.ui = login_Dialog.Ui_Login_Dialog()
         self.ui.setupUi(self.dialog, client, self)
         self.dialog.show()
 
     #A function that receives a client. The function opens the sign up dialog
     def open_sign_up_Dialog(self, client):
         self.dialog = QtWidgets.QDialog()
-        self.ui = sign_up1.Ui_Sign_up()
+        self.ui = sign_up_Dialog.Ui_Sign_up_Dialog()
         self.ui.setupUi(self.dialog, client, self)
         self.dialog.show()
 
-    # A function that receives the username and its unique id. The function changes the view of the main window. It turns it into a screen that shows the personal area of the logged in user
+    #A function that receives the username and its unique id. The function changes the view of the main window. It turns it into a screen that shows the personal area of the logged in user
     def turn_into_logged_in_mode(self, username, doctor_id):
         _translate = QtCore.QCoreApplication.translate
         self.login_btn.hide()
@@ -289,7 +256,7 @@ class Ui_MainWindow(object):
         self.tableWidget.show()
         self.log_out_btn.show()
 
-    # A function that receives a client. The function gets the patient list from the server and fills the table of patients
+    #A function that receives a client. The function gets the patient list from the server and fills the table of patients
     def fill_table(self, client):
         self.clear_table()
         self.tableWidget.setSortingEnabled(False)
@@ -311,35 +278,30 @@ class Ui_MainWindow(object):
                 pass
         self.tableWidget.setSortingEnabled(True)
 
-    # A function that cleat the table widget. Row number becomes 0 and contents are empty.
+    #A function that clears the table widget. The row number becomes 0 and the contents are empty.
     def clear_table(self):
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
 
-    # A function that receives birth date and calculate the age of the person. Returns the age.
+    #A function that receives birth date and calculates the age of the person. Returns the age.
     def calculate_age(self, birth_date):
         today = date.today()
         spllited_birth_date = birth_date.split('-')
         age = today.year - int(spllited_birth_date[0]) -((today.month, today.day) <(int(spllited_birth_date[1]), int(spllited_birth_date[2])))
         return age
 
-    #A function that ask the user to choose x-ray photo from the computer(using another fumction) and then the function sends it to the web server. In the end (if everything went well) the function open the results Dialog with the detection of the x-ray (using another function).
-    def select_photo_and_send_curl(self):
+    # A function that asks the user to choose an x-ray photo from the computer(using another function) and then the function sends it to the web server. In the end (if everything went well) the function opens the results Dialog with the detection of the x-ray (using another function).
+    def select_photo_and_send_curl(self, client):
         photo_path = self.get_file_name()
         if photo_path == '':
             return
-        try:
-            chance = sendCurl.send_curl(photo_path)
-            if chance != '':
-                split_chance = chance.split()
-                is_pneu = True
-                if split_chance[0] == 'normal':
-                    is_pneu = False
-                self.open_results_Dialog(is_pneu)
-        except:
-            None
+        inParamsTuple = (photo_path,True)
+        self.workDlg = QtWidgets.QDialog()
+        self.ui = progress_bar.Worker_Dialog(self.workDlg)
+        self.ui.setupUi(self.workDlg, client, send_curl.send_curl, inParamsTuple, self.after_send_curl)
+        self.workDlg.show()
 
-    # A function that ask the user to choose x-ray photo from the computer. The function allows only 'jpeg' files. The function returns the file location.
+    # A function that asks the user to choose an x-ray photo from the computer. The function allows only 'jpeg' files. The function returns the file location.
     def get_file_name(self):
         file_filter = 'Data File (*.jpeg)'
         response = QFileDialog.getOpenFileName(
@@ -351,22 +313,39 @@ class Ui_MainWindow(object):
         print(response)
         return response[0]
 
-    # A function that receives a client and a detection of an x-ray. The function opens the results dialog in accordance to the detection.
-    def open_results_Dialog(self, is_pneu):
+    # A function that receives tuple_response. The function returns if the detection is pneumonia and returns the exact chance.
+    def get_pneumonia_probability(self, tuple_response):
+        res = ''
+        if tuple_response == None:
+            return None, res
+        if len(tuple_response) == 2 and tuple_response[0] == True:
+            res = "Pneumonia in " + str(tuple_response[1])
+            return True, res
+        elif len(tuple_response) == 2 and tuple_response[0] == False:
+            res = "Normal in " + str(tuple_response[1])
+            return False, res
+
+    # A function that receives res_tuple_pneumonia, client. The function is called after the send curl function is finished. The function opens the results dialog.
+    def after_send_curl(self, res_tuple_pneumonia, client):
+        is_pneumonia, x_ray_detection = self.get_pneumonia_probability(res_tuple_pneumonia)
+        self.open_results_Dialog(is_pneumonia)
+
+    # A function that receives a client and detection of an x-ray. The function opens the results dialog in accordance with the detection.
+    def open_results_Dialog(self, is_pneumonia):
         self.dialog = QtWidgets.QDialog()
-        self.ui = results_win.Ui_results_win()
+        self.ui = results_Dialog.Ui_Results_Dialog()
         self.ui.setupUi(self.dialog)
-        self.ui.turn(is_pneu, "x_ray")
+        self.ui.turn(is_pneumonia, "x_ray")
         self.dialog.show()
 
     #A function that receives a client. The function opens the report_a_visit dialog
     def open_report_a_visit_Dialog(self, client):
         self.dialog = QtWidgets.QDialog()
-        self.ui = report_case.Ui_Report_a_visit()
+        self.ui = report_a_visit_Dialog.Ui_Report_a_visit_Dialog()
         self.ui.setupUi(self.dialog, client, self, self.doctor_id)
         self.dialog.show()
 
-    #A function that chnage the display to the design of home page. The user exits the personal area
+    # A function that changes the display to the design of the home page. The user exits the personal area
     def sign_out(self):
         self.login_btn.show()
         self.sign_up_btn.show()
@@ -384,10 +363,11 @@ class Ui_MainWindow(object):
     # A function that receives a client. The function opens the statistical_analysis Dialog.
     def open_statistical_analysis_Dialog(self, client):
         self.dialog = QtWidgets.QDialog()
-        self.ui = detection_stats.Ui_statistical_analysis()
+        self.ui = statistical_analysis_Dialog.Ui_Statistical_analysis_Dialog()
         self.ui.setupUi(self.dialog)
         self.dialog.show()
         self.ui.fill_stats_table("x_ray_stats", client, self.dialog, self.doctor_id)
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("DeTech", "DeTech"))

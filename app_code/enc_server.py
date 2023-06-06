@@ -1,36 +1,14 @@
-
 import ssl
 import threading as th
 import socket
-from queue import Queue
 import db
 import config
 
-certfile=r"localhost.pem"
+certfile = r"localhost.pem"
 cafile = r"cacert.pem"
 purpose = ssl.Purpose.CLIENT_AUTH
 context = ssl.create_default_context(purpose, cafile=cafile)
 context.load_cert_chain(certfile)
-
-def handle_pic(spllited_data, client_socket):
-    photo_name = spllited_data[0]
-    # while True:
-    #     data = client_socket.recv(1024)
-    #     f.write(data)
-    #     if len(data) < 1024:
-    #         f.write(data)
-    #         break
-    # photo_path = os.path.join(r"D:\Projects\finale", "pneumonia_3.jpeg")
-    img_bytes = b''
-    while True:
-        data = client_socket.recv(1024)
-        img_bytes += data
-        if len(data) < 1024:
-            img_bytes += data
-            break
-
-    doctor_id = spllited_data[1]
-    return photo_name, doctor_id, img_bytes
 
 #A function that receives a msg of login and returns the details of the user
 def handle_login_msg(msg):
@@ -40,16 +18,16 @@ def handle_login_msg(msg):
 
 #A function that receives a msg of sign_up and returns the details of the user
 def handle_sign_up_msg(msg):
-    name = msg[0]
+    full_name = msg[0]
     email = msg[1]
     username = msg[2]
     password = msg[3]
-    return name, email, username, password
+    return full_name, email, username, password
 
 #A function that receives a msg of add_patient and returns the details of the patient
 def handle_add_patient_msg(msg):
     full_name = msg[0]
-    ID = msg[1]
+    patient_id = msg[1]
     email = msg[2]
     gender = msg[3]
     birth_date = msg[4]
@@ -57,10 +35,10 @@ def handle_add_patient_msg(msg):
     visit_date = msg[6]
     doctor_id = msg[7]
     if len(msg) < 9:
-        return full_name, ID, email, gender, birth_date, case_description, visit_date, doctor_id, None
+        return full_name, patient_id, email, gender, birth_date, case_description, visit_date, doctor_id, None
     else:
         pneu_chance = msg[8]
-        return full_name, ID, email, gender, birth_date, case_description, visit_date, doctor_id, pneu_chance
+        return full_name, patient_id, email, gender, birth_date, case_description, visit_date, doctor_id, pneu_chance
 
 #A function that receives the client_socket and the client_address. The fumction handles the client request and send him back a response
 def handle_client(client_socket, client_address):
@@ -83,23 +61,19 @@ def handle_client(client_socket, client_address):
 
             #handle with sign up requests
             if split_data[0] == 'SIGN_UP':
-                name, email, username, password = handle_sign_up_msg(split_data[1:])
-                bret, doctor_id = db.add_user(name, email, username, password)
+                full_name, email, username, password = handle_sign_up_msg(split_data[1:])
+                bret, doctor_id = db.add_user(full_name, email, username, password)
                 if bret:
                     res = str(bret) + "\r\n" + doctor_id
                 else:
                     res = str(bret)
 
-            if split_data[0] == 'pic':
-                photo_name, doctor_id, img_bytes =handle_pic(split_data[1:], client_socket)
-                db.add_image(doctor_id, img_bytes)
-
             if split_data[0] == 'ADD_PATIENT':
-                full_name, ID, email, gender, birth_date, case_description, visit_date, doctor_id, pneu_chance = handle_add_patient_msg(split_data[1:])
+                full_name, patient_id, email, gender, birth_date, case_description, visit_date, doctor_id, pneu_chance = handle_add_patient_msg(split_data[1:])
                 if pneu_chance is None:
-                    bret = db.add_patient(full_name, ID, email, gender, birth_date, case_description, visit_date, doctor_id)
+                    bret = db.add_patient(full_name, patient_id, email, gender, birth_date, case_description, visit_date, doctor_id)
                 else:
-                    bret = db.add_patient_with_photo(full_name, ID, email, gender, birth_date, case_description, visit_date, doctor_id, pneu_chance)
+                    bret = db.add_patient_with_photo(full_name, patient_id, email, gender, birth_date, case_description, visit_date, doctor_id, pneu_chance)
                 if bret:
                     res = str(bret) + "\r\n" + username
                 else:
@@ -120,15 +94,7 @@ def handle_client(client_socket, client_address):
             # Send encrypted message to client
             response = split_data[0] +"_ans\r\n" + res
             response = response.encode()
-            total_sent = 0
-            # while total_sent < len(response):
-            #     sent = client_socket.send(response)
-            #     response = response[1024:]
-            #     if sent == 0:
-            #         raise RuntimeError("socket connection broken")
-            #     total_sent += sent
             client_socket.sendall(response)
-            # client_socket.close()
         except Exception as e:
             None
             client_socket.close()
@@ -136,8 +102,8 @@ def handle_client(client_socket, client_address):
 # A function that start the run and connects the server with its clients using socket
 def run():
     theAppConfig = config.AppConfig('app_config.ini')
-    host = theAppConfig.getStringValue('server','host')
-    port = theAppConfig.getIntValue('server','port')
+    host = theAppConfig.get_string_value('server', 'host')
+    port = theAppConfig.get_int_value('server', 'port')
     ThreadCount = 0
 
     ServerSideSocket = socket.socket()
