@@ -12,7 +12,7 @@ def send_curl(photo_path):
     }
     res = None
     try:
-        response = requests.post('http://192.168.2.23:5000/pneumonia/predict', headers=headers, files=files)
+        response = requests.post('http://localhost:5000/pneumonia/predict', headers=headers, files=files)
         res = response.text
         response.raise_for_status()
     except requests.exceptions.ConnectionError as errc:
@@ -30,7 +30,7 @@ def send_curl(photo_path):
     pneumonia_chance = str(pneumonia_chance)
     pneumonia_chance = pneumonia_chance[:4]
     pneumonia_chance = float(pneumonia_chance)
-    if not is_pneumonia and pneumonia_chance < 0.5:
+    if not is_pneumonia and pneumonia_chance < 50:
         pneumonia_chance= str(100-pneumonia_chance) + "%"
     else:
         pneumonia_chance= str(pneumonia_chance) + "%"
