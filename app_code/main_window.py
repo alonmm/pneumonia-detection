@@ -28,6 +28,7 @@ class Ui_MainWindow(object):
         self.the_app_config = config_parser
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(880, 690)
+        MainWindow.setFixedSize(880, 690)
         MainWindow.setStyleSheet("background-color: rgb(54, 54, 54);")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
